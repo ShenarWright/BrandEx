@@ -1,0 +1,2 @@
+12;Mackerel and rice;1000.00
+1;Bun and Cheese;400.66

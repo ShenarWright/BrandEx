@@ -1,0 +1,340 @@
+#include "Database.h"
+
+void Database::loadDatabase()
+{
+    loadPasswords();
+    loadPasswordHist();
+    loadUsers();
+    loadProducts();
+    loadCarts();
+}
+
+void Database::saveDatabase()
+{
+    savePasswords();
+    savePasswordHist();
+    saveUsers();
+    saveProducts();
+    saveCarts();
+}
+
+void Database::loadPasswords()
+{
+    std::fstream fs("data/passwords.txt",std::ios::in);
+
+    if(!fs.is_open())
+        std::cerr << "Failed to open file\n";
+
+    std::string buffer;
+    while(std::getline(fs,buffer))
+    {
+        accounts.push_back(parseAccount(buffer));
+    }
+    fs.close();
+}
+
+void Database::loadPasswordHist()
+{
+    std::fstream fs("data/passwordhist.txt",std::ios::in);
+
+    if(!fs.is_open())
+        std::cerr << "Failed to open file\n";
+
+    std::string buffer;
+    while(std::getline(fs,buffer))
+    {
+        for(int i = 0; i < accounts.size();i++)
+        {
+            Account temp = parseAccount(buffer);
+            if(accounts[i].email == temp.email)
+                accounts[i].passwordHist.push(temp.password);
+        }
+    }
+    fs.close();
+}
+
+void Database::savePasswords()
+{
+    std::fstream fs("data/passwords.txt",std::ios::out | std::ios::trunc);
+
+    if(!fs.is_open())
+        std::cerr << "Failed to open file\n";
+
+    
+    for(int i = 0; i < accounts.size();i++)
+    {
+        fs << std::format("{} : {}",accounts[i].email, accounts[i].password) << std::endl;
+    } 
+
+    fs.close();
+}
+
+void Database::savePasswordHist()
+{
+    std::fstream fs("data/passwordhist.txt",std::ios::out | std::ios::trunc);
+
+    if(!fs.is_open())
+        std::cerr << "Failed to open file\n";
+
+    
+        // TODO : FIX THIS
+    for(int i = 0; i < accounts.size();i++)
+    {
+        //for(auto& password : accounts[i].passwordHist)
+            //fs << std::format("{} : {}",accounts[i].passwordHist[i].email, accounts[i].passwordHist[i].password) << std::endl;
+    } 
+
+    fs.close();
+}
+
+void Database::loadUsers()
+{
+    std::fstream fs("data/users.txt",std::ios::in);
+    
+    if(!fs.is_open())
+        std::cerr << "Failed to open file\n";
+
+    std::string buffer;
+    while(std::getline(fs,buffer))
+    {
+        users.push_back(parseUser(buffer));
+    }
+}
+
+void Database::saveUsers()
+{
+    std::fstream fs("data/users.txt",std::ios::out | std::ios::trunc);
+
+    if(!fs.is_open())
+        std::cerr << "Failed to open file\n";
+
+    
+    for(int i = 0; i < users.size();i++)
+    {
+        fs << std::format("{};{};{}",users[i].firstName, users[i].lastName,users[i].email) << std::endl;
+    } 
+
+    fs.close();
+}
+
+void Database::loadProducts()
+{
+    std::fstream fs("data/products.txt");
+
+    if(!fs.is_open())
+        std::cerr << "Could not open file\n";
+
+    std::string buffer;
+    while(std::getline(fs,buffer))
+    {
+        ProductInfo productInfo = parseProductInfo(buffer);
+        products.insert(productInfo);
+    }
+
+    //products.display();
+    fs.close();
+}
+
+void Database::loadCarts()
+{
+    std::fstream fs("data/carts.txt");
+
+    if (!fs.is_open())
+        std::cerr << "Could not open file\n";
+
+    std::string buffer;
+    while (std::getline(fs, buffer))
+    {
+        CartRecord cartRecord = parseCartRecord(buffer);
+        for (int i = 0; i < users.size(); i++)
+        {
+            if (users[i].email == cartRecord.email)
+            {
+                users[i].cart = cartRecord.cartInfo;
+                break;
+                std::cout << cartRecord << '\n';
+            }
+        }
+    }
+
+    //products.display();
+    fs.close();
+}
+
+void Database::saveProducts()
+{
+    std::fstream fs("data/products-out.txt", std::ios::out | std::ios::trunc);
+
+    if (!fs.is_open())
+        std::cerr << "Could not open file\n";
+
+    auto productInfoList = products.getElements();
+    for (int i = 0; i < productInfoList.size(); i++)
+    {
+        fs << std::format("{};{};{}",
+            productInfoList[i].productId,
+            productInfoList[i].itemName,
+            productInfoList[i].price
+            ) << std::endl;
+    }
+}
+
+void Database::saveCarts()
+{
+    std::fstream fs("data/carts-out.txt", std::ios::out | std::ios::trunc);
+    if (!fs.is_open())
+        std::cerr << "Failed to open file\n";
+
+    for (int i = 0; i < users.size(); i++)
+    {
+        auto cartProducts = users[i].cart.getAllProducts();
+        
+        std::string buffer = users[i].email + ':' + std::format("[{},{}]",cartProducts[0].id,cartProducts[0].quantity);
+
+        for (int i = 1; i < cartProducts.size(); i++)
+        {
+            buffer += std::format(";[{},{}]", cartProducts[i].id, cartProducts[i].quantity);
+        }
+
+        fs << buffer << std::endl;
+    }
+}
+
+
+void Database::addAccountToDatabase(Account acc)
+{
+    accounts.push_back(acc);
+}
+
+std::string Database::getPassword(std::string email)
+{
+    for (auto& e : accounts)
+    {
+        if (e.email == email)
+            return e.password;
+    }
+    return {};
+}
+
+std::queue<std::string> Database::getRecentPasswords(std::string email)
+{
+    std::queue<std::string> passwords;
+
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        if (accounts[i].email == email)
+            return passwords;
+    }
+    return std::queue<std::string>();
+}
+
+Account Database::parseAccount(std::string data)
+{
+    std::string email, password;
+
+    //Get the index of the separator
+    size_t seperator = data.find(':');
+    email = data.substr(0, seperator - 1);
+    password = data.substr(seperator + 2, data.size());
+
+    return Account(email,password);
+}
+
+User Database::parseUser(std::string data)
+{
+    std::string firstName, lastName, email;
+
+    size_t openingSeperator = 0, closingSeperator = 0;
+
+    closingSeperator = data.find(';');
+    firstName = data.substr(openingSeperator,closingSeperator);
+   
+    openingSeperator = closingSeperator;
+    closingSeperator = data.find(';',closingSeperator + 1);
+    lastName = data.substr(openingSeperator + 1,closingSeperator - openingSeperator - 1);
+
+    openingSeperator = closingSeperator;
+    closingSeperator = data.find(';',closingSeperator + 1);
+    email = data.substr(openingSeperator + 1, data.size());
+
+    return User(firstName, lastName, email);
+}
+
+ProductInfo Database::parseProductInfo(std::string data)
+{
+    int productId;
+    std::string productName;
+    float price;
+
+    size_t openingSeperator = 0, closingSeperator = 0;
+    closingSeperator = data.find(';');
+    productId = std::stoi(data.substr(openingSeperator,closingSeperator));
+    //std::cout << data.substr(openingSeperator, closingSeperator) << " : ";
+
+    openingSeperator = closingSeperator;
+    closingSeperator = data.find(';', closingSeperator + 1);
+    productName = data.substr(openingSeperator + 1, closingSeperator - openingSeperator - 1);
+    //std::cout << data.substr(openingSeperator + 1, closingSeperator - openingSeperator - 1) << " : ";
+
+    openingSeperator = closingSeperator;
+    price = std::stof(data.substr(openingSeperator + 1, data.size()));
+    //std::cout << std::stof(data.substr(openingSeperator + 1, data.size())) << '\n';
+
+    return ProductInfo(productId,productName,price);
+}
+
+//This function assumes that there will be an opening and closing sqare brackets - eg. [ 1, 20 ]
+Product Database::parseProduct(std::string data)
+{
+    int id = 0, quantity = 0;
+    
+    size_t openingSeperator = data.find('[') + 1, closingSeperator = data.find(',');
+
+    id = std::stoi(data.substr(openingSeperator, closingSeperator - 1));
+
+    openingSeperator = closingSeperator;
+    closingSeperator = data.find(']');
+
+
+    quantity = std::stoi(data.substr(openingSeperator + 1, closingSeperator - openingSeperator - 1));
+    //std::cout << Product(id, quantity) << '\n';
+
+    return Product(id, quantity);
+}
+
+Cart Database::parseCart(std::string data)
+{
+    //Function expects that there is a : at the front of the incoming string
+    size_t openingSeperator = 0, closingSeperator = data.find(';');
+    Cart cart;
+
+    while (openingSeperator != std::string::npos)
+    {
+        //std::cout << data.substr(openingSeperator + 1 , closingSeperator - openingSeperator - 1) << '\n';
+
+        auto product = parseProduct(data.substr(openingSeperator + 1, closingSeperator - openingSeperator - 1));
+        cart.addProduct(product);
+
+        openingSeperator = data.find(';', openingSeperator + 1);
+        closingSeperator = data.find(';', closingSeperator + 1);
+    }
+    return cart;
+}
+
+CartRecord Database::parseCartRecord(std::string data)
+{
+    size_t seperator = data.find(":");
+    std::string email;
+    Cart cart;
+
+    if (seperator != std::string::npos)
+    {
+        email = data.substr(0, seperator);
+        cart = parseCart(data.substr(seperator, data.size()));
+    }
+    //std::cout << CartRecord(email,cart) << '\n';
+    //std::cout << data.substr(0, seperator) << '\n';
+    //std::cout << data.substr(seperator, data.size()) << '\n';
+
+    return CartRecord(email,cart);
+}
