@@ -4,26 +4,17 @@
 #include <thread> // used for sleep
 #include <chrono> // to use duration
 
+#include "Utils/Console.h"
+
+#include "DataStructures/Stack.h"
+
 
 // Used for liters such as 1s for 1 second and 3min for 3 minutes
 using namespace std::chrono_literals;
 
-//Ignore for now
-void runTest(Database& db)
-{
-    std::string password;
-    for (int i = 0; i < 10; i++)
-    {
-        password += 65 + rand() % 122;
-    }
-
-    db.addAccountToDatabase({ "BEN",Crypto::encryptPassword(password) });
-}
-
 int getMainMenuItem()
 {
     int option = 0;
-    bool acceptInput = true;
     do
     {
         //Clears the console
@@ -36,6 +27,8 @@ int getMainMenuItem()
                   << "3. Exit" << std::endl;
 
         std::cin >> option;
+
+
 
         //If input is valid
         if (option >= 1 && option <= 3)
@@ -55,11 +48,9 @@ void handleSignUp();
 
 int main()
 {
-    srand(time(0));
-    Database db;
-    db.loadDatabase();
+    srand((unsigned int)time(0));
+    Database::GetInstance().loadDatabase();
 
-    
 
     while (true)
     {
@@ -74,12 +65,13 @@ int main()
         default:
             return 0;
         }
+
+        Database::GetInstance().saveDatabase();
     }
 
-    db.saveDatabase();
+    Database::GetInstance().saveDatabase();
 
-    
-    runTest(db);
+   
     return 0;
 }
 

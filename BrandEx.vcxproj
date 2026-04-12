@@ -20,17 +20,24 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Account.h" />
+    <ClInclude Include="ActionManager.h" />
     <ClInclude Include="CartRecord.h" />
+    <ClInclude Include="Action.h" />
+    <ClInclude Include="Utils\Console.h" />
     <ClInclude Include="Utils\Crypto.h" />
-    <ClInclude Include="Utils\BinaryTree.h" />
+    <ClInclude Include="DataStructures\BinaryTree.h" />
     <ClInclude Include="Cart.h" />
     <ClInclude Include="Database.h" />
     <ClInclude Include="Product.h" />
     <ClInclude Include="ProductInfo.h" />
     <ClInclude Include="User.h" />
-    <ClInclude Include="Utils\Node.h" />
+    <ClInclude Include="Utils\Logger.h" />
+    <ClInclude Include="DataStructures\StackNode.h" />
+    <ClInclude Include="DataStructures\TreeNode.h" />
+    <ClInclude Include="DataStructures\Stack.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ActionManager.cpp" />
     <ClCompile Include="Cart.cpp" />
     <ClCompile Include="Utils\Crypto.cpp" />
     <ClCompile Include="Database.cpp" />

@@ -1,9 +1,8 @@
 #ifndef BINARYTREE_H
 #define BINARYTREE_H
 
-#include "Node.h"
+#include "TreeNode.h"
 
-#include "Node.h"
 
 template <typename T>
 class BinaryTree

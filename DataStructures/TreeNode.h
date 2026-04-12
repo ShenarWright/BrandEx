@@ -1,5 +1,5 @@
-#ifndef NODE_H
-#define NODE_H
+#ifndef TREENODE_H
+#define TREENODE_H
 
 #include <iostream>
 #include <queue>

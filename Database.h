@@ -16,8 +16,9 @@
 #include "User.h"
 #include "ProductInfo.h"
 #include "CartRecord.h"
-#include "Utils/BinaryTree.h"
+#include "DataStructures/BinaryTree.h"
 #include "Utils/Crypto.h"
+#include "Utils/Logger.h"
 
 class Database
 {
@@ -38,8 +39,18 @@ public:
     //Returns a queue with all recent passwords, returns an empty queue if none is found
     std::queue<std::string> getRecentPasswords(std::string email);
 
+    //Searc
+    bool validateOneTimePassword(std::string password);
+
+    std::string generateOneTimePassword();
+
     //Test function deven worry about it
     friend void runTest(Database& db);
+
+    void changeUserPassword(std::string email, std::string newPassword);
+
+    //Using a singleton
+    static Database& GetInstance();
 
 private:
     //Dynamic array that stores all the accounts
@@ -51,6 +62,8 @@ private:
     //Dynamic array that stores all the product info
     //std::map<int,ProductInfo> products;
     BinaryTree<ProductInfo> products;
+
+    std::vector<std::string> oneTimePasswords;
 
 private:
 

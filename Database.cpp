@@ -20,10 +20,10 @@ void Database::saveDatabase()
 
 void Database::loadPasswords()
 {
-    std::fstream fs("data/passwords.txt",std::ios::in);
+    std::fstream fs("data/passwords.txt",std::ios::in | std::ios::out | std::ios::app | std::ios::out | std::ios::app);
 
-    if(!fs.is_open())
-        std::cerr << "Failed to open file\n";
+    if (!fs.is_open())
+        Logger::error("Failed to open file");
 
     std::string buffer;
     while(std::getline(fs,buffer))
@@ -35,10 +35,10 @@ void Database::loadPasswords()
 
 void Database::loadPasswordHist()
 {
-    std::fstream fs("data/passwordhist.txt",std::ios::in);
+    std::fstream fs("data/passwordhist.txt",std::ios::in | std::ios::out | std::ios::app);
 
-    if(!fs.is_open())
-        std::cerr << "Failed to open file\n";
+    if (!fs.is_open())
+        return;
 
     std::string buffer;
     while(std::getline(fs,buffer))
@@ -57,8 +57,8 @@ void Database::savePasswords()
 {
     std::fstream fs("data/passwords.txt",std::ios::out | std::ios::trunc);
 
-    if(!fs.is_open())
-        std::cerr << "Failed to open file\n";
+    if (!fs.is_open())
+        return;
 
     
     for(int i = 0; i < accounts.size();i++)
@@ -73,8 +73,8 @@ void Database::savePasswordHist()
 {
     std::fstream fs("data/passwordhist.txt",std::ios::out | std::ios::trunc);
 
-    if(!fs.is_open())
-        std::cerr << "Failed to open file\n";
+    if (!fs.is_open())
+        return;
 
     
         // TODO : FIX THIS
@@ -89,10 +89,10 @@ void Database::savePasswordHist()
 
 void Database::loadUsers()
 {
-    std::fstream fs("data/users.txt",std::ios::in);
+    std::fstream fs("data/users.txt",std::ios::in | std::ios::out | std::ios::app);
     
-    if(!fs.is_open())
-        std::cerr << "Failed to open file\n";
+    if (!fs.is_open())
+        return;
 
     std::string buffer;
     while(std::getline(fs,buffer))
@@ -105,8 +105,8 @@ void Database::saveUsers()
 {
     std::fstream fs("data/users.txt",std::ios::out | std::ios::trunc);
 
-    if(!fs.is_open())
-        std::cerr << "Failed to open file\n";
+    if (!fs.is_open())
+        return;
 
     
     for(int i = 0; i < users.size();i++)
@@ -121,8 +121,8 @@ void Database::loadProducts()
 {
     std::fstream fs("data/products.txt");
 
-    if(!fs.is_open())
-        std::cerr << "Could not open file\n";
+    if (!fs.is_open())
+        return;
 
     std::string buffer;
     while(std::getline(fs,buffer))
@@ -140,7 +140,7 @@ void Database::loadCarts()
     std::fstream fs("data/carts.txt");
 
     if (!fs.is_open())
-        std::cerr << "Could not open file\n";
+        return;
 
     std::string buffer;
     while (std::getline(fs, buffer))
@@ -166,7 +166,7 @@ void Database::saveProducts()
     std::fstream fs("data/products-out.txt", std::ios::out | std::ios::trunc);
 
     if (!fs.is_open())
-        std::cerr << "Could not open file\n";
+        return;
 
     auto productInfoList = products.getElements();
     for (int i = 0; i < productInfoList.size(); i++)
@@ -183,7 +183,7 @@ void Database::saveCarts()
 {
     std::fstream fs("data/carts-out.txt", std::ios::out | std::ios::trunc);
     if (!fs.is_open())
-        std::cerr << "Failed to open file\n";
+        return;
 
     for (int i = 0; i < users.size(); i++)
     {
@@ -227,6 +227,62 @@ std::queue<std::string> Database::getRecentPasswords(std::string email)
     }
     return std::queue<std::string>();
 }
+
+bool Database::validateOneTimePassword(std::string password)
+{
+    for (int i = 0; i < oneTimePasswords.size(); i++)
+    {
+        if (oneTimePasswords[i] == password)
+        {
+            oneTimePasswords.erase(oneTimePasswords.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string Database::generateOneTimePassword()
+{
+    int length = 8 + rand() % 10;
+    std::string password;
+    for (int i = 0; i < length; i++)
+    {
+        int a = (48 + rand() % 9);
+    }
+
+    oneTimePasswords.push_back(password);
+    return password;
+}
+
+void Database::changeUserPassword(std::string email, std::string newPassword)
+{
+    int index = -1;
+    for (int i = 0; i < users.size(); i++)
+    {
+        if (users[i].email == email)
+        {
+            index = i;
+            break;
+        }
+    }
+
+    if (index <= -1)
+    {
+        Logger::error("Error could not find userName specified");
+    }
+
+    if (accounts[index].password == newPassword)
+    {
+        Logger::error("Cannot use old password");
+    }
+}
+
+Database& Database::GetInstance()
+{
+    static Database db;
+    return db;
+}
+
 
 Account Database::parseAccount(std::string data)
 {
