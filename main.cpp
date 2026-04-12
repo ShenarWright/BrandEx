@@ -82,5 +82,22 @@ void handleLogin()
 
 void handleSignUp()
 {
+    std::string name, lastName, email;
 
+    std::cout << "Please enter your name\n";
+    std::cin >> name;
+    
+    std::cout << "Please enter you last name\n";
+    std::cin >> lastName;
+
+    std::cout << "Please enter you last name\n";
+    std::cin >> email;
+
+    User user;
+    user.firstName = name;
+    user.lastName = lastName;
+    user.email = email;
+
+    std::cout << Database::GetInstance().generateOneTimePassword();
+    std::this_thread::sleep_for(3s);
 }
