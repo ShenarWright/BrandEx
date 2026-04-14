@@ -16,9 +16,14 @@
 #include "User.h"
 #include "ProductInfo.h"
 #include "CartRecord.h"
-#include "DataStructures/BinaryTree.h"
+
 #include "Utils/Crypto.h"
 #include "Utils/Logger.h"
+
+#include "DataStructures/BinaryTree.h"
+#include "DataStructures/Stack.h"
+#include "DataStructures/LinkedList.h"
+
 
 class Database
 {
@@ -32,6 +37,12 @@ public:
     //Please encrypt before adding to database
     void addAccountToDatabase(Account acc);
 
+    //updates Account Password
+    void updateAccountPassword(std::string email, std::string password);
+
+    //updates Account
+    void updateUser();
+
     //Returns password tied to an account, if no password is found it returns an empty string
     //Note that passwords are encrypte
     std::string getPassword(std::string email);
@@ -44,13 +55,19 @@ public:
 
     std::string generateOneTimePassword();
 
-    //Test function deven worry about it
-    friend void runTest(Database& db);
-
+    //Changes the user password and adds the old one to previous passwords
     void changeUserPassword(std::string email, std::string newPassword);
+
+    int searchProducts(std::string productName);
 
     //Using a singleton
     static Database& GetInstance();
+
+    User getUser(std::string email);
+
+    //Add user 
+    void AddUser(User user);
+
 
 private:
     //Dynamic array that stores all the accounts
@@ -62,6 +79,8 @@ private:
     //Dynamic array that stores all the product info
     //std::map<int,ProductInfo> products;
     BinaryTree<ProductInfo> products;
+    
+    
 
     std::vector<std::string> oneTimePasswords;
 

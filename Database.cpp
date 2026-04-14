@@ -206,6 +206,42 @@ void Database::addAccountToDatabase(Account acc)
     accounts.push_back(acc);
 }
 
+//TODO: IMPLEMENT OWN STACK AND QUEUE
+void Database::updateAccountPassword(std::string email, std::string password)
+{
+    //Encrypt password
+    password = Crypto::encryptPassword(password);
+
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        if (accounts[i].email == email) 
+        {
+
+            //Todo : add a find feature when implementing the list            
+            /*if (accounts[i].passwordHist.front() == password && accounts[i].passwordHist.back() == password)
+            {
+                Logger::error("Error: Password cannot be any of your previous passwords\n");
+                return;
+            }*/
+            
+            
+            if (!accounts[i].password.empty())
+            {
+                //Save current password to history
+                accounts[i].passwordHist.push(password);
+            }
+            accounts[i].password = password;
+            Logger::success("Successfully Updated Password!");
+            return;
+        }
+    }
+}
+\
+void Database::updateUser()
+{
+
+}
+
 std::string Database::getPassword(std::string email)
 {
     for (auto& e : accounts)
@@ -235,6 +271,7 @@ bool Database::validateOneTimePassword(std::string password)
         if (oneTimePasswords[i] == password)
         {
             oneTimePasswords.erase(oneTimePasswords.begin() + i);
+            
             return true;
         }
     }
@@ -243,14 +280,15 @@ bool Database::validateOneTimePassword(std::string password)
 
 std::string Database::generateOneTimePassword()
 {
-    int length = 8 + rand() % 10;
+    int length = 6;
     std::string password;
     for (int i = 0; i < length; i++)
     {
-        int a = (48 + rand() % 9);
+        //characters between 48 and 56
+        password += (char)(48 + rand() % 9);
     }
 
-    oneTimePasswords.push_back(password);
+    oneTimePasswords.push_back(password );
     return password;
 }
 
@@ -277,10 +315,30 @@ void Database::changeUserPassword(std::string email, std::string newPassword)
     }
 }
 
+int Database::searchProducts(std::string productName)
+{
+    return 0;// products.search();
+}
+
 Database& Database::GetInstance()
 {
     static Database db;
     return db;
+}
+
+User Database::getUser(std::string email)
+{
+    for (int i = 0; i < users.size(); i++)
+    {
+        if (users[i].email == email)
+            return users[i];
+    }
+    return User();
+}
+
+void Database::AddUser(User user)
+{
+    users.push_back(user);
 }
 
 

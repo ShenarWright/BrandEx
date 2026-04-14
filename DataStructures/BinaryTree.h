@@ -112,6 +112,11 @@ public:
         return elements;
     }
 
+    int search(std::string productName)
+    {
+
+    }
+
 private:
     Node<T>* root;
 

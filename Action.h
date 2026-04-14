@@ -5,12 +5,12 @@ class Action
 {
 public:
 
-	enum Type
+	enum ActionType
 	{
 		RemoveItem = 0,
 		AddItem
 	};
-	Type type;
+	ActionType type;
 
 	union value
 	{
