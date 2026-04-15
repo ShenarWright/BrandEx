@@ -76,8 +76,6 @@ void Database::savePasswordHist()
     if (!fs.is_open())
         return;
 
-    
-        // TODO : FIX THIS
     for(int i = 0; i < accounts.size();i++)
     {
         for(int j = 0; j < accounts[i].passwordHist.size();j++)
@@ -161,6 +159,21 @@ void Database::loadCarts()
     fs.close();
 }
 
+void Database::loadOrders()
+{
+    std::fstream fs("data/orders.txt");
+
+    if (!fs.is_open())
+        return;
+
+    std::string buffer;
+    while (std::getline(fs, buffer))
+    {
+        CartRecord record = parseCartRecord(buffer);
+        orders.push_back(record);
+    }
+}
+
 void Database::saveProducts()
 {
     std::fstream fs("data/products-out.txt", std::ios::out | std::ios::trunc);
@@ -221,7 +234,7 @@ void Database::updateAccountPassword(std::string email, std::string password)
         {
 
             //Todo : add a find feature when implementing the list            
-            if (accounts[i].passwordHist.hasElement(password))
+            if (accounts[i].passwordHist.hasElement(password) || accounts[i].password == password)
             {
                 Logger::error("Error: Password cannot be any of your previous passwords\n");
                 return;
@@ -277,6 +290,16 @@ bool Database::validateOneTimePassword(std::string password)
             
             return true;
         }
+    }
+    return false;
+}
+
+bool Database::accountExists(std::string email)
+{
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        if (accounts[i].email == email)
+            return true;
     }
     return false;
 }
@@ -358,6 +381,29 @@ void Database::updateUser(User user)
 std::vector<ProductInfo> Database::getProducts()
 {
     return products.getElements();
+}
+
+ProductInfo Database::getProductInfo(int id)
+{
+    return products.search(id);
+}
+
+//Finish implementing
+std::vector<CartRecord> Database::filterCustomerOrder(std::string email)
+{
+    std::vector<CartRecord> userOrders;
+    for (int i = 0; i < orders.size(); i++)
+    {
+        if (orders[i].email == email)
+            userOrders.push_back(orders[i]);
+    }
+
+    return userOrders;
+}
+
+std::vector<User> Database::getAllUsers()
+{
+    return users;
 }
 
 

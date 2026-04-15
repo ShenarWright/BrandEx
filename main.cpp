@@ -24,14 +24,23 @@ void forcePasswordSet(std::string email);
 
 int handleBrowseProducts();
 void handleModifyAccount();
+void handleViewOrderHistory();
+
+//Prints the cart from the cart and returns the total
+float printCart(Cart cart);
 
 int getClientMenuItem();
 int getAdminMenuItem();
 
+void handleProcessOrders();
+void handleGetClientPasswords();
+void handleChangeCustomerPassword();
+
 //Signup options
 void handleSignUp();
 
-User currentUser;
+User currentUser = User("John","Doe","johndoe@gmail.com");
+
 
 int main()
 {
@@ -88,7 +97,10 @@ void handleLogin()
                 
                 break;
             case 5:
-                run = false;
+                handleViewOrderHistory();
+                break;
+            case 6:
+
                 break;
             }
         } while (run);
@@ -99,6 +111,18 @@ void handleLogin()
         {
             switch (getAdminMenuItem())
             {
+            case 1:
+                handleProcessOrders();
+                break;
+            case 2:
+                handleGetClientPasswords();
+                break;
+            case 3:
+                handleChangeCustomerPassword();
+                break;
+            case 4:
+                return;
+                break;
             default:
                 break;
             }
@@ -236,11 +260,11 @@ int handleBrowseProducts()
     auto products = Database::GetInstance().getProducts();
     
     std::cout << std::format("{:->47}","") << '\n';
-    std::cout << std::format("|{:<4}|{:<30}|{:<9}|", "ID", "Name", "Price") << '\n';
+    std::cout << std::format("|{:<4}|{:<30}|${:>9}|", "ID", "Name", "Price") << '\n';
     std::cout << std::format("{:->47}", "") << '\n';
     for (int i = 0; i < products.size(); i++)
     {
-        std::cout << std::format("|{:<4}|{:<30}|{:<9}|", products[i].productId, products[i].itemName, products[i].price) << '\n';
+        std::cout << std::format("|{:<4}|{:<30}|${:>9}|", products[i].productId, products[i].itemName, products[i].price) << '\n';
         std::cout << std::format("{:->47}", "") << '\n';
     }
     std::this_thread::sleep_for(10s);
@@ -317,7 +341,132 @@ void handleModifyAccount()
     std::this_thread::sleep_for(3s);
 }
 
+void handleViewOrderHistory()
+{
+    std::system("cls");
+
+    float grandTotal = 0.0f;
+    auto orders = Database::GetInstance().filterCustomerOrder(currentUser.email);
+
+    // Test Data
+    /*
+    for (int i = 0; i < 10; i++)
+    {
+        Cart cart;
+        cart.addProduct(i,rand() % 10);
+        cart.addProduct(i + 1,rand() % 10);
+        cart.addProduct(i + 2,rand() % 10);
+        cart.addProduct(i + 3,rand() % 10);
+        orders.push_back(CartRecord("johndoe@gmail.com",cart));
+    }*/
+
+
+    for (int i = 0; i < orders.size(); i++)
+    {
+        std::cout << std::format("|{:->40}|","") << '\n';
+        std::cout << std::format("|{:<20}|{:<8}|${:>9}|","Name","Quantity","Total") << '\n';
+        std::cout << std::format("|{:->40}|", "") << '\n';
+        grandTotal += printCart(orders[i].cartInfo);
+        std::cout << "\n\n";
+    }
+
+    std::cout << std::format("|{:->40}|", "") << '\n';
+    std::cout << std::format("|GrandTotal: {:>28.2f}|", grandTotal * 1.15f) << '\n';
+    std::cout << std::format("|{:->40}|", "") << '\n';
+
+    std::this_thread::sleep_for(20s);
+}
+
+float printCart(Cart cart)
+{
+    auto products = cart.getAllProducts();
+    float total = 0.f;
+
+    for (int i = 0; i < products.size(); i++)
+    {
+        std::string productName = Database::GetInstance().getProductInfo(products[i].id).itemName;
+        int quantity = products[i].quantity;
+        float price = Database::GetInstance().getProductInfo(products[i].id).price;
+
+        std::cout << std::format("|{:<20}|{:<8}|${:>9.2f}|",productName,quantity,price * (float)quantity) << '\n';
+        std::cout << std::format("|{:->40}|", "") << '\n';
+        total += price * quantity;
+    }
+    std::cout << std::format("|Tax: ${:>34.2f}|", total * 0.15f) << '\n';
+    std::cout << std::format("|Total: ${:>32.2f}|", total * 1.15) << '\n';
+    std::cout << std::format("|{:->40}|", "") << '\n';
+
+    return total;
+}
+
 int getAdminMenuItem()
 {
-    return 0;
+    int option = 0;
+    do
+    {
+        std::system("cls");
+        std::cout << "BrandEx!!\n";
+        std::cout << "1. Process Orders\n";
+        std::cout << "2. View Customer Passwords\n";
+        std::cout << "3. Modify a password\n";
+        std::cout << "4. Exit\n";
+
+        std::cin >> option;
+
+        if (option > 0 && option < 5)
+            break;
+
+        Logger::error("Invalid Input please try again");
+
+        std::this_thread::sleep_for(2s);
+
+    } while (true);
+    return option;
+}
+
+void handleProcessOrders()
+{
+
+}
+
+void handleGetClientPasswords()
+{
+    auto users = Database::GetInstance().getAllUsers();
+
+    std::cout << std::format("|{:->56}|", "") << '\n';
+    std::cout << std::format("|{:<40}|{:<15}|","email","password") << '\n';
+    std::cout << std::format("|{:->56}|", "") << '\n';
+    for (int i = 0; i < users.size(); i++)
+    {
+        std::string email = users[i].email;
+        std::string password = Crypto::decryptPassword(Database::GetInstance().getPassword(email));
+        std::cout << std::format("|{:<40}|{:<15}|",email,password) << '\n';
+        std::cout << std::format("|{:->56}|", "") << '\n';
+    }
+    system("pause");
+}
+
+void handleChangeCustomerPassword()
+{
+    std::string email, password;
+
+    do
+    {
+        std::cout << "Enter Customer email: ";
+        std::cin >> email;
+
+        if (Database::GetInstance().accountExists(email))
+        {
+            break;
+        }
+
+        Logger::error("Email doesn't exist, enter email again");
+
+    } while (true);
+
+    password = getPassword();
+
+    Database::GetInstance().updateAccountPassword(email, password);
+    std::this_thread::sleep_for(3s);
+    
 }

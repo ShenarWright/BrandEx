@@ -50,6 +50,8 @@ public:
     //Searc
     bool validateOneTimePassword(std::string password);
 
+    bool accountExists(std::string email);
+
     std::string generateOneTimePassword();
 
     //Changes the user password and adds the old one to previous passwords
@@ -69,6 +71,14 @@ public:
     void updateUser(User user);
 
     std::vector<ProductInfo> getProducts();
+
+    ProductInfo getProductInfo(int id);
+
+    std::vector<CartRecord> filterCustomerOrder(std::string email);
+
+    std::vector<User> getAllUsers();
+
+    
 private:
     //Dynamic array that stores all the accounts
     std::vector<Account> accounts;
@@ -81,8 +91,9 @@ private:
     BinaryTree<ProductInfo> products;
     
     
-
     std::vector<std::string> oneTimePasswords;
+
+    std::vector<CartRecord> orders;
 
 private:
 
@@ -94,19 +105,21 @@ private:
     Cart parseCart(std::string data);
     CartRecord parseCartRecord(std::string data);
 
-    //Load passwords
+    //Load function
     void loadPasswords();
     void loadPasswordHist();
     void loadUsers();
     void loadProducts();
     void loadCarts();
+    void loadOrders();
 
-    //Save Passwords
+    //Save Function
     void savePasswords();
     void savePasswordHist();
     void saveUsers();
     void saveProducts();
     void saveCarts();
+    void saveOrders();
 };
 
 #endif // DATABASE_H

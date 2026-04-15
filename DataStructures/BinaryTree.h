@@ -112,9 +112,32 @@ public:
         return elements;
     }
 
-    int search(std::string productName)
+    T search(int id)
     {
+        std::queue<Node<T>*> elementQueue;
+        elementQueue.push(root);
 
+        while (!elementQueue.empty())
+        {
+            if (elementQueue.front() == nullptr)
+            {
+                elementQueue.pop();
+                continue;
+            }
+
+            if (elementQueue.front()->data != id)
+            {
+                elementQueue.push(elementQueue.front()->left);
+                elementQueue.push(elementQueue.front()->right);
+                elementQueue.pop();
+            }
+            else
+            {
+                return elementQueue.front()->data;
+            }
+
+        }
+        return {};
     }
 
 private:

@@ -22,6 +22,16 @@ struct ProductInfo
     {
         return productId > other.productId;
     }
+
+    bool operator==(int id)
+    {
+        return id == productId;
+    }
+
+    bool operator!=(int id)
+    {
+        return !(*this == id);
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, ProductInfo p)
