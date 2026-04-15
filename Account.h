@@ -5,12 +5,14 @@
 #include <string>
 #include <queue>
 
+#include "DataStructures/Queue.h"
+
 struct Account
 {
     std::string email;
     std::string password;
 
-    std::queue<std::string> passwordHist;
+    Queue<std::string> passwordHist;
 
     Account(std::string Email, std::string Password) : email(Email), password(Password){}
 };

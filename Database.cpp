@@ -43,9 +43,9 @@ void Database::loadPasswordHist()
     std::string buffer;
     while(std::getline(fs,buffer))
     {
+        Account temp = parseAccount(buffer);
         for(int i = 0; i < accounts.size();i++)
         {
-            Account temp = parseAccount(buffer);
             if(accounts[i].email == temp.email)
                 accounts[i].passwordHist.push(temp.password);
         }
@@ -80,8 +80,8 @@ void Database::savePasswordHist()
         // TODO : FIX THIS
     for(int i = 0; i < accounts.size();i++)
     {
-        //for(auto& password : accounts[i].passwordHist)
-            //fs << std::format("{} : {}",accounts[i].passwordHist[i].email, accounts[i].passwordHist[i].password) << std::endl;
+        for(int j = 0; j < accounts[i].passwordHist.size();j++)
+            fs << std::format("{} : {}",accounts[i].email, accounts[i].passwordHist[j]) << std::endl;
     } 
 
     fs.close();
@@ -188,15 +188,18 @@ void Database::saveCarts()
     for (int i = 0; i < users.size(); i++)
     {
         auto cartProducts = users[i].cart.getAllProducts();
-        
-        std::string buffer = users[i].email + ':' + std::format("[{},{}]",cartProducts[0].id,cartProducts[0].quantity);
 
-        for (int i = 1; i < cartProducts.size(); i++)
+        if (!cartProducts.empty())
         {
-            buffer += std::format(";[{},{}]", cartProducts[i].id, cartProducts[i].quantity);
-        }
+            std::string buffer = users[i].email + ':' + std::format("[{},{}]",cartProducts[0].id,cartProducts[0].quantity);
 
-        fs << buffer << std::endl;
+            for (int i = 1; i < cartProducts.size(); i++)
+            {
+                buffer += std::format(";[{},{}]", cartProducts[i].id, cartProducts[i].quantity);
+            }
+
+            fs << buffer << std::endl;
+        }
     }
 }
 
@@ -218,28 +221,28 @@ void Database::updateAccountPassword(std::string email, std::string password)
         {
 
             //Todo : add a find feature when implementing the list            
-            /*if (accounts[i].passwordHist.front() == password && accounts[i].passwordHist.back() == password)
+            if (accounts[i].passwordHist.hasElement(password))
             {
                 Logger::error("Error: Password cannot be any of your previous passwords\n");
                 return;
-            }*/
-            
+            }
             
             if (!accounts[i].password.empty())
             {
-                //Save current password to history
-                accounts[i].passwordHist.push(password);
+                //If this is a password change , i will insert the previous into the password history
+                std::string currentPassword = accounts[i].password;
+                accounts[i].passwordHist.push(currentPassword);
+                
+                //IF more than 2 passwords are in the history, remove the one at the front of the list
+                if (accounts[i].passwordHist.size() > 2)
+                    accounts[i].passwordHist.pop();
+                
             }
             accounts[i].password = password;
             Logger::success("Successfully Updated Password!");
             return;
         }
     }
-}
-\
-void Database::updateUser()
-{
-
 }
 
 std::string Database::getPassword(std::string email)
@@ -339,6 +342,22 @@ User Database::getUser(std::string email)
 void Database::AddUser(User user)
 {
     users.push_back(user);
+}
+
+void Database::updateUser(User user)
+{
+    for (int i = 0; i < users.size(); i++)
+    {
+        if (users[i].email == user.email)
+        {
+            users[i] = user;
+        }
+    }
+}
+
+std::vector<ProductInfo> Database::getProducts()
+{
+    return products.getElements();
 }
 
 

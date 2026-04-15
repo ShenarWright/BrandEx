@@ -23,6 +23,7 @@
     <ClInclude Include="ActionManager.h" />
     <ClInclude Include="CartRecord.h" />
     <ClInclude Include="Action.h" />
+    <ClInclude Include="DataStructures\Queue.h" />
     <ClInclude Include="DataStructures\LinkedList.h" />
     <ClInclude Include="DataStructures\LinkNode.h" />
     <ClInclude Include="Utils\Console.h" />

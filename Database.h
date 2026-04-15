@@ -40,9 +40,6 @@ public:
     //updates Account Password
     void updateAccountPassword(std::string email, std::string password);
 
-    //updates Account
-    void updateUser();
-
     //Returns password tied to an account, if no password is found it returns an empty string
     //Note that passwords are encrypte
     std::string getPassword(std::string email);
@@ -69,6 +66,9 @@ public:
     void AddUser(User user);
 
 
+    void updateUser(User user);
+
+    std::vector<ProductInfo> getProducts();
 private:
     //Dynamic array that stores all the accounts
     std::vector<Account> accounts;
