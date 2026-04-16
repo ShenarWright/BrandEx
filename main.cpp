@@ -28,6 +28,7 @@ void forcePasswordSet(std::string email);
 
 int getUserInput(std::string title,std::vector<std::string> options);
 
+void printProducts();
 void handleBrowseProducts();
 void handleModifyCart();
 void handleModifyAccount();
@@ -179,15 +180,33 @@ void handleSignUp()
 {
     std::string name, lastName, email;
 
-    std::cout << "Please enter your First name: ";
-    std::cin >> name;
+    do
+    {
+        std::cout << "Please enter your First name: ";
+        std::cin >> name;
+
+        std::cout << "Please enter you Last name: ";
+        std::cin >> lastName;
+
+        std::cout << "Please enter your email: \n";
+        std::cin >> email;
+
+        if (!validateEmailAddress(email))
+        {
+            Logger::error("Invalid Email try again");
+            std::this_thread::sleep_for(3s);
+        }
+
+        if (!Database::GetInstance().accountExists(email))
+            break;
+        else
+        {
+            Logger::error("An account already Exists");
+            std::this_thread::sleep_for(3s);
+        }
+
+    } while (true);
     
-    std::cout << "Please enter you Last name: ";
-    std::cin >> lastName;
-
-    std::cout << "Please enter your email: \n";
-    std::cin >> email;
-
     User user;
     user.firstName = name;
     user.lastName = lastName;
@@ -199,7 +218,7 @@ void handleSignUp()
     Database::GetInstance().addAccountToDatabase(Account{email,""});
     Database::GetInstance().AddUser(user);
 
-    std::this_thread::sleep_for(3s);
+    std::this_thread::sleep_for(5s);
 }
 
 int getMainMenuItem()
@@ -304,7 +323,7 @@ void handleForgotPassword(std::string email)
         std::cout << "Please enter your First name: ";
         std::cin >> firstName;
 
-        std::cout << "Please enter your First name:s";
+        std::cout << "Please enter your First name:";
         std::cin >> lastName;
 
         std::cout << "Please Enter new Password: ";
@@ -327,6 +346,7 @@ void handleForgotPassword(std::string email)
 
 void forcePasswordSet(std::string email)
 {
+    std::system("cls");
     std::string password;
     std::cout << "BrandEx!! - Set Password\n";
     std::cout << "Please enter a password: ";
@@ -334,6 +354,7 @@ void forcePasswordSet(std::string email)
     password = getPassword();
    
     Database::GetInstance().updateAccountPassword(email, password);
+    std::this_thread::sleep_for(3s);
 }
 
 int getUserInput(std::string title, std::vector<std::string> options)
@@ -361,29 +382,44 @@ int getUserInput(std::string title, std::vector<std::string> options)
     return option;
 }
 
-void handleBrowseProducts()
-{   
+void printProducts()
+{
     auto products = Database::GetInstance().getProducts();
-    
-    std::cout << std::format("{:->47}","") << '\n';
-    std::cout << std::format("|{:<4}|{:<30}|${:>9}|", "ID", "Name", "Price") << '\n';
-    std::cout << std::format("{:->47}", "") << '\n';
-    for (int i = 0; i < products.size(); i++)
+
+    std::cout << std::format("{:->47}", "") << "     " << std::format("{:->47}", "") << '\n';
+    std::cout << std::format("|{:<4}|{:<30}|${:>9}|", "ID", "Name", "Price") << "     " << std::format("|{:<4}|{:<30}|${:>9}|", "ID", "Name", "Price") << '\n';
+    std::cout << std::format("{:->47}", "") << "     " << std::format("{:->47}", "") << '\n';
+    for (int i = 0; i < products.size(); i+= 2)
     {
-        std::cout << std::format("|{:<4}|{:<30}|${:>9}|", products[i].productId, products[i].itemName, products[i].price) << '\n';
+        std::cout << std::format("|{:<4}|{:<30}|${:>9}|", products[i].productId, products[i].itemName, products[i].price) << "    ";
+
+        if (i + 1 < products.size())
+        {
+            std::cout << std::format("|{:<4}|{:<30}|${:>9}|", products[i+ 1].productId, products[i + 1].itemName, products[i + 1].price) << '\n';
+            std::cout << std::format("{:->47}", "") << "    ";
+        }
+        else
+            std::cout << '\n';
         std::cout << std::format("{:->47}", "") << '\n';
     }
+}
+
+void handleBrowseProducts()
+{   
 
     int option;
     do
     {
+        std::system("cls");
+        printProducts();
+        auto products = Database::GetInstance().getProducts();
         std::cout << "Enter the ID of the item you want to add (-1 to exit): ";
         std::cin >> option;
 
         if (option == -1)
             break;
 
-        if (option < 0 || option >= products.size())
+        if (option < 0 || option > products.size())
         {
             Logger::error("Invalid input please try again");
         }
@@ -501,12 +537,12 @@ void handleModifyAccount()
     if (!firstName.empty())
     {
         currentUser.firstName = firstName;
-        std::cout << "Firstname changed\n";
+        Logger::success("First Name changed");
     }
     if (!lastName.empty())
     {
         currentUser.lastName = lastName;
-        std::cout << "Lastname changed\n";
+        Logger::success("Last Name changed");
     }
 
     if (!password.empty())
@@ -546,19 +582,6 @@ void handleViewOrderHistory()
     float grandTotal = 0.0f;
     auto orders = Database::GetInstance().filterCustomerOrder(currentUser.email);
 
-    // Test Data
-    /*
-    for (int i = 0; i < 10; i++)
-    {
-        Cart cart;
-        cart.addProduct(i,rand() % 10);
-        cart.addProduct(i + 1,rand() % 10);
-        cart.addProduct(i + 2,rand() % 10);
-        cart.addProduct(i + 3,rand() % 10);
-        orders.push_back(CartRecord("johndoe@gmail.com",cart));
-    }*/
-
-
     for (int i = 0; i < orders.size(); i++)
     {
 
@@ -576,13 +599,6 @@ void handleViewOrderHistory()
 void handleCheckEmail()
 {
     auto emails = Database::GetInstance().filterCustomerEmail(currentUser.email);
-
-    /*std::vector<Email> emails = {
-        {currentUser.email," Test Subject", "You dont have to worry about it"},
-        {currentUser.email,"Password Updated", "You dont have to worry about it"},
-        {currentUser.email," Upgrade Account", "You dont have to worry about it"},
-        {currentUser.email," Heyyyy", "You dont have to worry about it"}
-    };*/
 
     if (emails.size() == 0)
     {
@@ -689,6 +705,9 @@ int getAdminMenuItem()
 void handleProcessOrders()
 {
     Warehouse::processOrders();
+    Logger::success("Orders have been queued to process");
+
+    system("pause");
 }
 
 void handleGetClientPasswords()
@@ -719,13 +738,17 @@ void handleChangeCustomerPassword()
 
         if (Database::GetInstance().accountExists(email))
         {
+            Logger::error("Email doesn't exist, enter email again");
             break;
         }
 
-        Logger::error("Email doesn't exist, enter email again");
+        if (!validateEmailAddress(email))
+            Logger::error("Invalid Email, try again");
+
 
     } while (true);
 
+    std::cout << "Enter new Password: ";
     password = getPassword();
 
     Database::GetInstance().updateAccountPassword(email, password);

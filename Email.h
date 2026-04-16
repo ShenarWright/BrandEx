@@ -10,4 +10,9 @@ struct Email
 	std::string message;
 };
 
+inline bool validateEmailAddress(std::string email)
+{
+	return email.find('@') != std::string::npos;
+}
+
 #endif // !EMAIL_H

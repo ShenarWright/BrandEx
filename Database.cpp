@@ -212,7 +212,7 @@ void Database::loadEmails()
 
 void Database::saveProducts()
 {
-    std::fstream fs("data/products-out.txt", std::ios::out | std::ios::trunc);
+    std::fstream fs("data/products.txt", std::ios::out | std::ios::trunc);
 
     if (!fs.is_open())
         return;
@@ -256,10 +256,13 @@ void Database::saveOrders()
 {
     std::fstream fs("data/orders.txt", std::ios::out | std::ios::trunc);
 
+    if (!fs.is_open())
+        return;
+
     for(int i = 0; i < orders.size();i++)
     {
         auto cartProducts = orders[i].cartInfo.getAllProducts();
-        std::string buffer = users[i].email + ':' + std::format("[{},{}]", cartProducts[0].id, cartProducts[0].quantity);
+        std::string buffer = orders[i].email + ':' + std::format("[{},{}]", cartProducts[0].id, cartProducts[0].quantity);
 
         for (int i = 1; i < cartProducts.size(); i++)
         {
@@ -274,10 +277,13 @@ void Database::savePastOrders()
 {
     std::fstream fs("data/past-orders.txt", std::ios::out | std::ios::trunc);
 
-    for (int i = 0; i < orders.size(); i++)
+    if (!fs.is_open())
+        return;
+
+    for (int i = 0; i < pastOrders.size(); i++)
     {
-        auto cartProducts = orders[i].cartInfo.getAllProducts();
-        std::string buffer = users[i].email + ':' + std::format("[{},{}]", cartProducts[0].id, cartProducts[0].quantity);
+        auto cartProducts = pastOrders[i].cartInfo.getAllProducts();
+        std::string buffer = pastOrders[i].email + ':' + std::format("[{},{}]", cartProducts[0].id, cartProducts[0].quantity);
 
         for (int i = 1; i < cartProducts.size(); i++)
         {
@@ -350,6 +356,7 @@ bool Database::updateAccountPassword(std::string email, std::string password)
             return true;
         }
     }
+    return false;
 }
 
 std::string Database::getPassword(std::string email)
@@ -468,8 +475,12 @@ void Database::updateUser(User user)
         if (users[i].email == user.email)
         {
             users[i] = user;
+            return;
         }
     }
+
+    //if user doesn't exist create it
+    AddUser(user);
 }
 
 std::vector<ProductInfo> Database::getProducts()

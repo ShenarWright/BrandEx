@@ -9,19 +9,33 @@ void ActionManager::redoAction(User& currentUser)
 {
 	Action currentAction = redoActions.getTop();
 	redoActions.pop();
+
+	if (currentAction.product.id == 0)
+		return;
+
 	switch (currentAction.type)
 	{
-		case Action::REMOVEITEM: break;
-		case Action::CHANGEQUANTITY: break;
-
+		case Action::REMOVEITEM:
+			currentUser.cart.addProduct(currentAction.product);
+			break;
+		case Action::CHANGEQUANTITY: 
+			currentUser.cart.addProduct(currentAction.product);
+			break;
 	}
 }
 
 void ActionManager::undoAction(User& currentUser)
 {
 	Action currentAction = undoActions.getTop();
-	redoActions.push(currentAction);
+	undoActions.pop();
+
+	Action redoAction = currentAction;
+	redoAction.product = currentUser.cart.getProduct(currentAction.product.id);
+	redoActions.push(redoAction);
 	
+	//This means that the stack was empty
+	if (currentAction.product.id == 0)
+		return;
 
 	switch (currentAction.type)
 	{

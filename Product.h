@@ -7,8 +7,8 @@
 
 struct Product
 {
-    int id;
-    int quantity;
+    int id = 0;
+    int quantity = 0;
 
     Product(int productId, int productQuantity) : id(productId), quantity(productQuantity){}
     Product() : id(-1), quantity(-1){}
