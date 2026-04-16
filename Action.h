@@ -1,22 +1,20 @@
 #ifndef ACTION_H
 #define ACTION_H
 
+#include "Product.h"
+
 class Action
 {
 public:
 
 	enum ActionType
 	{
-		RemoveItem = 0,
-		AddItem
+		REMOVEITEM = 0,
+		CHANGEQUANTITY
 	};
 	ActionType type;
 
-	union value
-	{
-		float price;
-
-	};
+	Product product;
 };
 
 #endif //ACTION_H

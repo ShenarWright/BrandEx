@@ -23,6 +23,7 @@
 #include "DataStructures/BinaryTree.h"
 #include "DataStructures/Stack.h"
 #include "DataStructures/LinkedList.h"
+#include "Email.h"
 
 
 class Database
@@ -38,7 +39,7 @@ public:
     void addAccountToDatabase(Account acc);
 
     //updates Account Password
-    void updateAccountPassword(std::string email, std::string password);
+    bool updateAccountPassword(std::string email, std::string password);
 
     //Returns password tied to an account, if no password is found it returns an empty string
     //Note that passwords are encrypte
@@ -74,11 +75,24 @@ public:
 
     ProductInfo getProductInfo(int id);
 
+    // TODO: Make this get customer past orders
     std::vector<CartRecord> filterCustomerOrder(std::string email);
 
     std::vector<User> getAllUsers();
 
-    
+    std::vector<Email> filterCustomerEmail(std::string email);
+
+    void addEmail(std::string recipient, Email email);
+
+    //Ps this clears all orders
+    std::queue<CartRecord> getUnprocessedOrders();
+
+    //This adds to the orders that have been processed
+    void setProcessedOrders(CartRecord order);
+
+    //This adds to the orders that have yet to be processed
+    void addCustomerOrder(CartRecord order);
+
 private:
     //Dynamic array that stores all the accounts
     std::vector<Account> accounts;
@@ -94,6 +108,9 @@ private:
     std::vector<std::string> oneTimePasswords;
 
     std::vector<CartRecord> orders;
+    std::vector<CartRecord> pastOrders;
+    
+    std::vector<Email> emails;
 
 private:
 
@@ -104,6 +121,7 @@ private:
     Product parseProduct(std::string data);
     Cart parseCart(std::string data);
     CartRecord parseCartRecord(std::string data);
+    Email parseEmail(std::string data);
 
     //Load function
     void loadPasswords();
@@ -112,6 +130,8 @@ private:
     void loadProducts();
     void loadCarts();
     void loadOrders();
+    void loadPastOrders();
+    void loadEmails();
 
     //Save Function
     void savePasswords();
@@ -120,6 +140,8 @@ private:
     void saveProducts();
     void saveCarts();
     void saveOrders();
+    void savePastOrders();
+    void saveEmails();
 };
 
 #endif // DATABASE_H

@@ -3,10 +3,10 @@
 
 #include <string>
 
-struct
+struct Email
 {
-	std::string from;
-	std::string to;
+	std::string recipient;
+	std::string subject;
 	std::string message;
 };
 

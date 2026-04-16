@@ -7,6 +7,9 @@ void Database::loadDatabase()
     loadUsers();
     loadProducts();
     loadCarts();
+    loadOrders();
+    loadPastOrders();
+    loadEmails();
 }
 
 void Database::saveDatabase()
@@ -16,6 +19,9 @@ void Database::saveDatabase()
     saveUsers();
     saveProducts();
     saveCarts();
+    saveOrders();
+    savePastOrders();
+    saveEmails();
 }
 
 void Database::loadPasswords()
@@ -174,6 +180,36 @@ void Database::loadOrders()
     }
 }
 
+void Database::loadPastOrders()
+{
+    std::fstream fs("data/past-orders.txt");
+
+    if (!fs.is_open())
+        return;
+
+    std::string buffer;
+    while (std::getline(fs, buffer))
+    {
+        CartRecord record = parseCartRecord(buffer);
+        orders.push_back(record);
+    }
+}
+
+void Database::loadEmails()
+{
+    std::fstream fs("data/emails.txt");
+
+    if (!fs.is_open())
+        return;
+
+    std::string buffer;
+    while (std::getline(fs, buffer))
+    {
+        auto email = parseEmail(buffer);
+        emails.push_back(email);
+    }
+}
+
 void Database::saveProducts()
 {
     std::fstream fs("data/products-out.txt", std::ios::out | std::ios::trunc);
@@ -194,7 +230,7 @@ void Database::saveProducts()
 
 void Database::saveCarts()
 {
-    std::fstream fs("data/carts-out.txt", std::ios::out | std::ios::trunc);
+    std::fstream fs("data/carts.txt", std::ios::out | std::ios::trunc);
     if (!fs.is_open())
         return;
 
@@ -216,6 +252,55 @@ void Database::saveCarts()
     }
 }
 
+void Database::saveOrders()
+{
+    std::fstream fs("data/orders.txt", std::ios::out | std::ios::trunc);
+
+    for(int i = 0; i < orders.size();i++)
+    {
+        auto cartProducts = orders[i].cartInfo.getAllProducts();
+        std::string buffer = users[i].email + ':' + std::format("[{},{}]", cartProducts[0].id, cartProducts[0].quantity);
+
+        for (int i = 1; i < cartProducts.size(); i++)
+        {
+            buffer += std::format(";[{},{}]", cartProducts[i].id, cartProducts[i].quantity);
+        }
+
+        fs << buffer << std::endl;
+    }
+}
+
+void Database::savePastOrders()
+{
+    std::fstream fs("data/past-orders.txt", std::ios::out | std::ios::trunc);
+
+    for (int i = 0; i < orders.size(); i++)
+    {
+        auto cartProducts = orders[i].cartInfo.getAllProducts();
+        std::string buffer = users[i].email + ':' + std::format("[{},{}]", cartProducts[0].id, cartProducts[0].quantity);
+
+        for (int i = 1; i < cartProducts.size(); i++)
+        {
+            buffer += std::format(";[{},{}]", cartProducts[i].id, cartProducts[i].quantity);
+        }
+
+        fs << buffer << std::endl;
+    }
+}
+
+void Database::saveEmails()
+{
+    std::fstream fs("data/emails.txt",std::ios::out | std::ios::trunc);
+
+    if (!fs.is_open())
+        return;
+
+    for (int i = 0; i < emails.size(); i++)
+    {
+        fs << std::format("{};{};{}", emails[i].recipient, emails[i].subject, emails[i].message) << '\n';
+    }
+}
+
 
 void Database::addAccountToDatabase(Account acc)
 {
@@ -223,7 +308,7 @@ void Database::addAccountToDatabase(Account acc)
 }
 
 //TODO: IMPLEMENT OWN STACK AND QUEUE
-void Database::updateAccountPassword(std::string email, std::string password)
+bool Database::updateAccountPassword(std::string email, std::string password)
 {
     //Encrypt password
     password = Crypto::encryptPassword(password);
@@ -237,7 +322,7 @@ void Database::updateAccountPassword(std::string email, std::string password)
             if (accounts[i].passwordHist.hasElement(password) || accounts[i].password == password)
             {
                 Logger::error("Error: Password cannot be any of your previous passwords\n");
-                return;
+                return false;
             }
             
             if (!accounts[i].password.empty())
@@ -252,8 +337,17 @@ void Database::updateAccountPassword(std::string email, std::string password)
                 
             }
             accounts[i].password = password;
+
+            //Send email to customer
+            Email emailInfo;
+            emailInfo.recipient = email;
+            emailInfo.subject = "Password Successfully Updated";
+            emailInfo.message = std::format("Your Password has been updated successfully. Your new password is {}", Crypto::decryptPassword(password));
+
+            addEmail(email,emailInfo);
+
             Logger::success("Successfully Updated Password!");
-            return;
+            return true;
         }
     }
 }
@@ -392,10 +486,10 @@ ProductInfo Database::getProductInfo(int id)
 std::vector<CartRecord> Database::filterCustomerOrder(std::string email)
 {
     std::vector<CartRecord> userOrders;
-    for (int i = 0; i < orders.size(); i++)
+    for (int i = 0; i < pastOrders.size(); i++)
     {
-        if (orders[i].email == email)
-            userOrders.push_back(orders[i]);
+        if (pastOrders[i].email == email)
+            userOrders.push_back(pastOrders[i]);
     }
 
     return userOrders;
@@ -406,6 +500,45 @@ std::vector<User> Database::getAllUsers()
     return users;
 }
 
+std::vector<Email> Database::filterCustomerEmail(std::string email)
+{
+    std::vector<Email> userEmails;
+
+    for (int i = 0; i < emails.size(); i++)
+    {
+        if (emails[i].recipient == email)
+            userEmails.push_back(emails[i]);
+    }
+
+    return userEmails;
+}
+
+void Database::addEmail(std::string recipient, Email email)
+{
+    emails.push_back(email);
+}
+
+std::queue<CartRecord> Database::getUnprocessedOrders()
+{
+
+    std::queue<CartRecord> records;
+    for (int i = 0; i < orders.size(); i++)
+    {
+        records.push(orders[i]);
+    }
+    orders.clear();
+    return records;
+}
+
+void Database::setProcessedOrders(CartRecord order)
+{
+    pastOrders.push_back(order);
+}
+
+void Database::addCustomerOrder(CartRecord order)
+{
+    orders.push_back(order);
+}
 
 Account Database::parseAccount(std::string data)
 {
@@ -516,4 +649,24 @@ CartRecord Database::parseCartRecord(std::string data)
     //std::cout << data.substr(seperator, data.size()) << '\n';
 
     return CartRecord(email,cart);
+}
+
+Email Database::parseEmail(std::string data)
+{
+    std::string recipient, subject, message;
+
+    size_t openingSeperator = 0, closingSeperator = 0;
+
+    closingSeperator = data.find(';');
+    recipient = data.substr(openingSeperator, closingSeperator);
+
+    openingSeperator = closingSeperator;
+    closingSeperator = data.find(';', closingSeperator + 1);
+    subject = data.substr(openingSeperator + 1, closingSeperator - openingSeperator - 1);
+
+    openingSeperator = closingSeperator;
+    closingSeperator = data.find(';', closingSeperator + 1);
+    message = data.substr(openingSeperator + 1, data.size());
+
+    return Email(recipient, subject, message);
 }

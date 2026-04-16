@@ -6,6 +6,11 @@ template <typename T>
 class Stack
 {
 public:
+	~Stack()
+	{
+		while (top != nullptr)
+			pop();
+	}
 
 	void push(T data)
 	{

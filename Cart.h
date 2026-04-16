@@ -12,6 +12,9 @@ public:
     void addProduct(int productId, int quantity);
     void addProduct(Product p);
     Product getProduct(int productId);
+    void removeProduct(int productId);
+
+    bool isEmpty();
 
     std::vector<Product> getAllProducts();
     void emptyCart();

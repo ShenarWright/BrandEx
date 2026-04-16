@@ -23,6 +23,7 @@
     <ClInclude Include="ActionManager.h" />
     <ClInclude Include="CartRecord.h" />
     <ClInclude Include="Action.h" />
+    <ClInclude Include="Email.h" />
     <ClInclude Include="DataStructures\Queue.h" />
     <ClInclude Include="DataStructures\LinkedList.h" />
     <ClInclude Include="DataStructures\LinkNode.h" />
@@ -38,6 +39,7 @@
     <ClInclude Include="DataStructures\StackNode.h" />
     <ClInclude Include="DataStructures\TreeNode.h" />
     <ClInclude Include="DataStructures\Stack.h" />
+    <ClInclude Include="Warehouse.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ActionManager.cpp" />
@@ -45,6 +47,7 @@
     <ClCompile Include="Utils\Crypto.cpp" />
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Warehouse.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="data\carts.txt" />

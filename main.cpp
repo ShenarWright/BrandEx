@@ -10,6 +10,9 @@
 #include "DataStructures/LinkedList.h"
 #include "DataStructures/Queue.h"
 
+#include "Warehouse.h"
+#include "ActionManager.h"
+
 
 // Used for liters such as 1s for 1 second and 3min for 3 minutes
 using namespace std::chrono_literals;
@@ -20,11 +23,18 @@ int getMainMenuItem();
 void handleLogin();
 
 bool validateUser();
+void handleForgotPassword(std::string email);
 void forcePasswordSet(std::string email);
 
-int handleBrowseProducts();
+int getUserInput(std::string title,std::vector<std::string> options);
+
+void handleBrowseProducts();
+void handleModifyCart();
 void handleModifyAccount();
+void handleCheckOut();
 void handleViewOrderHistory();
+void handleCheckEmail();
+void showEmail(Email email);
 
 //Prints the cart from the cart and returns the total
 float printCart(Cart cart);
@@ -59,16 +69,44 @@ int main()
             handleLogin();
             break;
         default:
+            Database::GetInstance().saveDatabase();
             return 0;
         }
 
         Database::GetInstance().saveDatabase();
     }
-
-    Database::GetInstance().saveDatabase();
-
    
     return 0;
+}
+
+int getClientMenuItem()
+{
+    int option = 0;
+    do
+    {
+        std::system("cls");
+
+        std::cout << "BrandEx!!\n";
+        std::cout << "1. Modify Account\n";
+        std::cout << "2. Browse Products\n";
+        std::cout << "3. Modify Cart\n";
+        std::cout << "4. Checkout \n";
+        std::cout << "5. View Order History\n";
+        std::cout << "6. View Email\n";
+        std::cout << "7. Exit\n";
+        std::cout << ">";
+
+        std::cin >> option;
+
+        if (option > 0 && option < 8)
+            break;
+
+        Logger::error("Invalid Input please try again!");
+        std::this_thread::sleep_for(1s);
+
+    } while (true);
+
+    return option;
 }
 
 void handleLogin()
@@ -92,17 +130,21 @@ void handleLogin()
                 handleBrowseProducts();
                 break;
             case 3:
+                handleModifyCart();
                 break;
             case 4:
-                
+                handleCheckOut();
                 break;
             case 5:
                 handleViewOrderHistory();
                 break;
             case 6:
-
+                handleCheckEmail();
                 break;
+            case 7:
+                return;
             }
+            Database::GetInstance().saveDatabase();
         } while (run);
     }
     else
@@ -126,9 +168,11 @@ void handleLogin()
             default:
                 break;
             }
+            Database::GetInstance().saveDatabase();
         } while (run);
     }
 
+    ActionManager::GetInstance().reset();
 }
 
 void handleSignUp()
@@ -155,7 +199,7 @@ void handleSignUp()
     Database::GetInstance().addAccountToDatabase(Account{email,""});
     Database::GetInstance().AddUser(user);
 
-    std::this_thread::sleep_for(5s);
+    std::this_thread::sleep_for(3s);
 }
 
 int getMainMenuItem()
@@ -198,14 +242,18 @@ bool validateUser()
     do
     {
         std::system("cls");
-        std::cout << Crypto::decryptPassword(Database::GetInstance().getPassword("johndoe@gmail.com")) << '\n';
         std::cout << "BrandEx Login!!\n";
         std::cout << "Please Enter email: ";
         std::cin >> email;
+        std::cout << "Forgot password? just enter -1\n";
         std::cout << "Please Enter password or generate OTP: ";
         password = getPassword();
 
-  
+        if (password == "-1")
+        {
+            handleForgotPassword(email);
+            continue;
+        }
 
         //Get password from the database - password in database is already encrypted
         std::string storedPassword = Crypto::decryptPassword(Database::GetInstance().getPassword(email));
@@ -244,6 +292,39 @@ bool validateUser()
     return authorized;
 }
 
+void handleForgotPassword(std::string email)
+{
+    std::string firstName, lastName,password;
+    bool loop = true;
+    do
+    {
+        std::system("cls");
+
+        std::cout << "BrandEx! Forgot Password?\n";
+        std::cout << "Please enter your First name: ";
+        std::cin >> firstName;
+
+        std::cout << "Please enter your First name:s";
+        std::cin >> lastName;
+
+        std::cout << "Please Enter new Password: ";
+        password = getPassword();
+
+        auto user = Database::GetInstance().getUser(email);
+        if (user.firstName == firstName && user.lastName == lastName)
+        {
+            loop = !Database::GetInstance().updateAccountPassword(email,password);
+        }
+        else
+        {
+            Logger::error("Names don't match");
+        }
+
+         std::this_thread::sleep_for(3s);
+    } while (loop);
+
+}
+
 void forcePasswordSet(std::string email)
 {
     std::string password;
@@ -255,7 +336,32 @@ void forcePasswordSet(std::string email)
     Database::GetInstance().updateAccountPassword(email, password);
 }
 
-int handleBrowseProducts()
+int getUserInput(std::string title, std::vector<std::string> options)
+{
+    int option = 0;
+    do
+    {
+        std::system("cls");
+        std::cout << title << '\n';
+
+        for (int i = 0; i < options.size(); i++)
+        {
+            std::cout << i + 1 << " " << options[i] << '\n';
+        }
+
+        std::cin >> option;
+
+        if (option > 0 && option <= options.size())
+            break;
+
+        Logger::error("Invalid input please try again");
+        std::this_thread::sleep_for(2s);
+    } while (true);
+
+    return option;
+}
+
+void handleBrowseProducts()
 {   
     auto products = Database::GetInstance().getProducts();
     
@@ -267,40 +373,113 @@ int handleBrowseProducts()
         std::cout << std::format("|{:<4}|{:<30}|${:>9}|", products[i].productId, products[i].itemName, products[i].price) << '\n';
         std::cout << std::format("{:->47}", "") << '\n';
     }
-    std::this_thread::sleep_for(10s);
-    return 0;
+
+    int option;
+    do
+    {
+        std::cout << "Enter the ID of the item you want to add (-1 to exit): ";
+        std::cin >> option;
+
+        if (option == -1)
+            break;
+
+        if (option < 0 || option >= products.size())
+        {
+            Logger::error("Invalid input please try again");
+        }
+        else
+        {
+            currentUser.cart.addProduct(option, 1);
+            Database::GetInstance().updateUser(currentUser);
+        }
+
+    } while (true);
+
+}
+
+void handleModifyCart()
+{
+
+    int option = 0;
+    do
+    {
+        option = getUserInput("BrandEx!!\n",
+            {
+                "View Cart",
+                "Change Quantity of Item",
+                "Remove Item From Cart",
+                "Undo Action",
+                "Redo Action",
+                "Exit"
+            });
+
+        switch (option)
+        {
+        case 1:
+        {
+            std::system("cls");
+
+            printCart(currentUser.cart);
+
+            system("pause");
+        }
+         break;
+        case 2:
+        {
+            int id = 0, quantity = 0;
+            std::system("cls");
+            printCart(currentUser.cart);
+
+            std::cout << "\nEnter the ID of the Item you want to modify: ";
+            std::cin >> id;
+
+            std::cout << "Enter the quantity of the Item: ";
+            std::cin >> quantity;
+
+            //Validate Info
+
+            //Save current product information
+            ActionManager::GetInstance().pushAction({ Action::CHANGEQUANTITY,currentUser.cart.getProduct(id)});
+
+            //Update info
+            currentUser.cart.addProduct(id, quantity);
+
+            Logger::success("Successfully Changed Item");
+        }
+        break;
+        case 3:
+        {
+            int id = 0;
+            std::cout << "Enter the Id of the Item you want to remove: ";
+            std::cin >> id;
+
+
+            //Get current product iformation
+            ActionManager::GetInstance().pushAction({Action::REMOVEITEM, {currentUser.cart.getProduct(id)}});
+
+            //Remove Products
+            currentUser.cart.removeProduct(id);
+            Logger::success("Successfully Removed Item");
+        }
+        break;
+        case 4: 
+            ActionManager::GetInstance().undoAction(currentUser);
+            Logger::success("Successfully Undid Action");
+            std::this_thread::sleep_for(1s);
+            break;
+        case 5: 
+            ActionManager::GetInstance().redoAction(currentUser); 
+            Logger::success("Successfully Redid Action");
+            std::this_thread::sleep_for(1s);
+            break;
+        case 6: Database::GetInstance().updateUser(currentUser); return;
+        }
+    } while (true);
+
 }
 
 
 // Client section
-int getClientMenuItem()
-{
-    int option = 0;
-    do
-    {
-        std::system("cls");
-
-        std::cout << "BrandEx!!\n";
-        std::cout << "1. Modify Account\n";
-        std::cout << "2. Browse Products\n";
-        std::cout << "3. Modify Cart\n";
-        std::cout << "4. Checkout \n";
-        std::cout << "5. View Order History\n";
-        std::cout << "6. Exit\n";
-        std::cout << ">";
-
-        std::cin >> option;
-
-        if (option > 0 || option < 6)
-            break;
-
-        Logger::error("Invalid Input please try again!");
-        std::this_thread::sleep_for(3s);
-
-    } while (true);
-
-    return option;
-}
 
 void handleModifyAccount()
 {
@@ -338,7 +517,26 @@ void handleModifyAccount()
     Database::GetInstance().updateUser(currentUser);
     Logger::success("Sucessfully Updated Account");
 
-    std::this_thread::sleep_for(3s);
+    std::this_thread::sleep_for(1s);
+}
+
+void handleCheckOut()
+{
+    std::system("cls");
+
+    if (!currentUser.cart.isEmpty())
+    {
+        CartRecord order(currentUser.email, currentUser.cart);
+        Database::GetInstance().addCustomerOrder(order);
+        currentUser.cart.emptyCart();
+        Logger::success("Successfully placed order, Order will be processed in a timely manner");
+    }
+    else
+    {
+        Logger::error("Cart is empty");
+    }
+
+    std::this_thread::sleep_for(2s);
 }
 
 void handleViewOrderHistory()
@@ -363,9 +561,7 @@ void handleViewOrderHistory()
 
     for (int i = 0; i < orders.size(); i++)
     {
-        std::cout << std::format("|{:->40}|","") << '\n';
-        std::cout << std::format("|{:<20}|{:<8}|${:>9}|","Name","Quantity","Total") << '\n';
-        std::cout << std::format("|{:->40}|", "") << '\n';
+
         grandTotal += printCart(orders[i].cartInfo);
         std::cout << "\n\n";
     }
@@ -374,7 +570,69 @@ void handleViewOrderHistory()
     std::cout << std::format("|GrandTotal: {:>28.2f}|", grandTotal * 1.15f) << '\n';
     std::cout << std::format("|{:->40}|", "") << '\n';
 
-    std::this_thread::sleep_for(20s);
+    std::system("pause");
+}
+
+void handleCheckEmail()
+{
+    auto emails = Database::GetInstance().filterCustomerEmail(currentUser.email);
+
+    /*std::vector<Email> emails = {
+        {currentUser.email," Test Subject", "You dont have to worry about it"},
+        {currentUser.email,"Password Updated", "You dont have to worry about it"},
+        {currentUser.email," Upgrade Account", "You dont have to worry about it"},
+        {currentUser.email," Heyyyy", "You dont have to worry about it"}
+    };*/
+
+    if (emails.size() == 0)
+    {
+        std::system("cls");
+        std::cout << "There are no emails in the inbox\n";
+        std::system("pause");
+        return;
+    }
+
+    int option = 0;
+    do
+    {
+        std::cout << std::format("|{:-<58}|","") << '\n';
+        std::cout << std::format("|{:<7}|{:<50}|", "Number", "Subject") << '\n';
+        std::cout << std::format("|{:-<58}|","") << '\n';
+
+        for (int i = 0; i < emails.size(); i++)
+        {
+            std::cout << std::format("|{:<7}|{:<50}|",i + 1,emails[i].subject) << '\n';
+            std::cout << std::format("|{:-<58}|", "") << '\n';
+        }
+
+    
+        
+        std::cout << "\nSelect email to view";
+        std::cin >> option;
+
+        if (option > 0 && option <= emails.size())
+            break;
+
+        Logger::error("Invalid input please try again");
+    } while (true);
+
+    showEmail(emails[option - 1]);
+}
+
+void showEmail(Email email)
+{
+    std::system("cls");
+
+    std::cout << "From: System\n";
+    std::cout << "To: " << email.recipient << '\n';
+    std::cout << "Subject: " << email.subject << '\n';
+    std::cout << std::format("{:->60}", "") << '\n';
+    std::cout << email.message << '\n';
+
+    std::this_thread::sleep_for(1s);
+
+
+    std::system("pause");
 }
 
 float printCart(Cart cart)
@@ -382,19 +640,23 @@ float printCart(Cart cart)
     auto products = cart.getAllProducts();
     float total = 0.f;
 
+    std::cout << std::format("|{:->45}|", "") << '\n';
+    std::cout << std::format("|{:<4}|{:<20}|{:<8}|${:>9}|","ID", "Name", "Quantity", "Total") << '\n';
+    std::cout << std::format("|{:->45}|", "") << '\n';
+
     for (int i = 0; i < products.size(); i++)
     {
         std::string productName = Database::GetInstance().getProductInfo(products[i].id).itemName;
         int quantity = products[i].quantity;
         float price = Database::GetInstance().getProductInfo(products[i].id).price;
 
-        std::cout << std::format("|{:<20}|{:<8}|${:>9.2f}|",productName,quantity,price * (float)quantity) << '\n';
-        std::cout << std::format("|{:->40}|", "") << '\n';
+        std::cout << std::format("|{:<4}|{:<20}|{:<8}|${:>9.2f}|",products[i].id,productName,quantity,price * (float)quantity) << '\n';
+        std::cout << std::format("|{:->45}|", "") << '\n';
         total += price * quantity;
     }
-    std::cout << std::format("|Tax: ${:>34.2f}|", total * 0.15f) << '\n';
-    std::cout << std::format("|Total: ${:>32.2f}|", total * 1.15) << '\n';
-    std::cout << std::format("|{:->40}|", "") << '\n';
+    std::cout << std::format("|Tax: ${:>39.2f}|", total * 0.15f) << '\n';
+    std::cout << std::format("|Total: ${:>37.2f}|", total * 1.15) << '\n';
+    std::cout << std::format("|{:->45}|", "") << '\n';
 
     return total;
 }
@@ -418,7 +680,7 @@ int getAdminMenuItem()
 
         Logger::error("Invalid Input please try again");
 
-        std::this_thread::sleep_for(2s);
+        std::this_thread::sleep_for(1s);
 
     } while (true);
     return option;
@@ -426,7 +688,7 @@ int getAdminMenuItem()
 
 void handleProcessOrders()
 {
-
+    Warehouse::processOrders();
 }
 
 void handleGetClientPasswords()
@@ -467,6 +729,6 @@ void handleChangeCustomerPassword()
     password = getPassword();
 
     Database::GetInstance().updateAccountPassword(email, password);
-    std::this_thread::sleep_for(3s);
+    std::this_thread::sleep_for(1s);
     
 }

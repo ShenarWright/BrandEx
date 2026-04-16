@@ -33,6 +33,22 @@ Product Cart::getProduct(int productId)
 	return Product(-1,-1);
 }
 
+void Cart::removeProduct(int productId)
+{
+	for (int i = 0; i < products.size(); i++)
+	{
+		if (products[i].id == productId)
+		{
+			products.erase(products.begin() + i);
+		}
+	}
+}
+
+bool Cart::isEmpty()
+{
+	return products.empty();
+}
+
 std::vector<Product> Cart::getAllProducts()
 {
 	return products;

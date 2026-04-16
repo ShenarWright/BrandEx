@@ -5,24 +5,45 @@ void ActionManager::pushAction(Action action)
 	undoActions.push(action);
 }
 
-void ActionManager::redoAction()
+void ActionManager::redoAction(User& currentUser)
 {
 	Action currentAction = redoActions.getTop();
+	redoActions.pop();
 	switch (currentAction.type)
 	{
-		case Action::AddItem: break;
-		case Action::RemoveItem: break;
+		case Action::REMOVEITEM: break;
+		case Action::CHANGEQUANTITY: break;
 
 	}
 }
 
-void ActionManager::undoAction()
+void ActionManager::undoAction(User& currentUser)
 {
 	Action currentAction = undoActions.getTop();
+	redoActions.push(currentAction);
+	
+
 	switch (currentAction.type)
 	{
-	case Action::AddItem: break;
-	case Action::RemoveItem: break;
-
+	//If the customer removed an item we add it back
+	case Action::REMOVEITEM: 
+		currentUser.cart.addProduct(currentAction.product);
+		break;
+	case Action::CHANGEQUANTITY: 
+		currentUser.cart.addProduct(currentAction.product);
+		break;
 	}
+}
+
+//Reiniializeds the stacks so that it cleans up old information
+void ActionManager::reset()
+{
+	undoActions = Stack<Action>();
+	redoActions = Stack<Action>();
+}
+
+ActionManager& ActionManager::GetInstance()
+{
+	static ActionManager manager;
+	return manager;
 }

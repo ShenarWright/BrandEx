@@ -7,6 +7,12 @@ template <typename T>
 class Queue
 {
 public:
+	~Queue()
+	{
+		while (last != nullptr)
+			pop();
+	}
+
 	void push(T data)
 	{
 		if (last == nullptr)
@@ -32,6 +38,7 @@ public:
 		{
 			numElements--;
 			delete last;
+			last = nullptr;
 			return;
 		}
 

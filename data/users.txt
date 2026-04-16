@@ -1,2 +1,5 @@
-Dante;Gordon;1
+Cid;Kageno;1
 John;Doe;johndoe@gmail.com
+ben;parker;benparke@gmail.com
+new;user;user@gmail.com
+John;Smith;johnsmith@gmail.com
