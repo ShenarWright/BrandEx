@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LOGGER_H
+#define LOGGER_H
 
 #include <iostream>
 
@@ -15,3 +16,5 @@ public:
 		std::cout << "\033[32m" << message << "\033[0m" << std::endl;
 	}
 };
+
+#endif // LOGGER_H

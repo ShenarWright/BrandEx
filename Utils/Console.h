@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CONSOLE_H
+#define CONSOLE_H
+
 
 #include <iostream>
 #include <conio.h>
@@ -49,3 +51,6 @@ std::string getPassword()
 
     return password;
 }
+
+
+#endif //CONSOLE_H

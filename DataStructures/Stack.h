@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STACK_H
+#define STACK_H
 
 #include "StackNode.h"
 
@@ -36,7 +37,7 @@ public:
 	{
 		if (top == nullptr)
 			return;
-		
+
 		StackNode<T>* temp = top;
 		top = top->next;
 		delete temp;
@@ -61,3 +62,5 @@ public:
 private:
 	StackNode<T>* top = nullptr;
 };
+
+#endif // !STACK_H
