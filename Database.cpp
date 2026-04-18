@@ -191,7 +191,7 @@ void Database::loadPastOrders()
     while (std::getline(fs, buffer))
     {
         CartRecord record = parseCartRecord(buffer);
-        orders.push_back(record);
+        pastOrders.push_back(record);
     }
 }
 

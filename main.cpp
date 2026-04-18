@@ -45,6 +45,7 @@ int getAdminMenuItem();
 
 void handleProcessOrders();
 void handleGetClientPasswords();
+void printClientPasswords();
 void handleChangeCustomerPassword();
 
 //Signup options
@@ -188,7 +189,7 @@ void handleSignUp()
         std::cout << "Please enter you Last name: ";
         std::cin >> lastName;
 
-        std::cout << "Please enter your email: \n";
+        std::cout << "Please enter your email: ";
         std::cin >> email;
 
         if (!validateEmailAddress(email))
@@ -396,7 +397,7 @@ void printProducts()
         if (i + 1 < products.size())
         {
             std::cout << std::format("|{:<4}|{:<30}|${:>9}|", products[i+ 1].productId, products[i + 1].itemName, products[i + 1].price) << '\n';
-            std::cout << std::format("{:->47}", "") << "    ";
+            std::cout << std::format("{:->47}", "") << "     ";
         }
         else
             std::cout << '\n';
@@ -486,9 +487,20 @@ void handleModifyCart()
         case 3:
         {
             int id = 0;
-            std::cout << "Enter the Id of the Item you want to remove: ";
-            std::cin >> id;
+            do
+            {
+                std::system("cls");
+                printCart(currentUser.cart);
+                std::cout << "Enter the Id of the Item you want to remove: ";
+                std::cin >> id;
 
+                if (currentUser.cart.getProduct(id).id > 0)
+                    break;
+
+                Logger::error("Item does not exist is cart");
+                std::this_thread::sleep_for(3s);
+                
+            } while (true);
 
             //Get current product iformation
             ActionManager::GetInstance().pushAction({Action::REMOVEITEM, {currentUser.cart.getProduct(id)}});
@@ -501,15 +513,15 @@ void handleModifyCart()
         case 4: 
             ActionManager::GetInstance().undoAction(currentUser);
             Logger::success("Successfully Undid Action");
-            std::this_thread::sleep_for(1s);
+            
             break;
         case 5: 
             ActionManager::GetInstance().redoAction(currentUser); 
             Logger::success("Successfully Redid Action");
-            std::this_thread::sleep_for(1s);
             break;
         case 6: Database::GetInstance().updateUser(currentUser); return;
         }
+        std::this_thread::sleep_for(2s);
     } while (true);
 
 }
@@ -600,7 +612,7 @@ void handleCheckEmail()
 {
     auto emails = Database::GetInstance().filterCustomerEmail(currentUser.email);
 
-    if (emails.size() == 0)
+    if (emails.size() <= 0)
     {
         std::system("cls");
         std::cout << "There are no emails in the inbox\n";
@@ -611,6 +623,7 @@ void handleCheckEmail()
     int option = 0;
     do
     {
+        std::system("cls");
         std::cout << std::format("|{:-<58}|","") << '\n';
         std::cout << std::format("|{:<7}|{:<50}|", "Number", "Subject") << '\n';
         std::cout << std::format("|{:-<58}|","") << '\n';
@@ -656,9 +669,9 @@ float printCart(Cart cart)
     auto products = cart.getAllProducts();
     float total = 0.f;
 
-    std::cout << std::format("|{:->45}|", "") << '\n';
-    std::cout << std::format("|{:<4}|{:<20}|{:<8}|${:>9}|","ID", "Name", "Quantity", "Total") << '\n';
-    std::cout << std::format("|{:->45}|", "") << '\n';
+    std::cout << std::format("|{:->48}|", "") << '\n';
+    std::cout << std::format("|{:<4}|{:<20}|{:<8}|${:>12}|","ID", "Name", "Quantity", "Total") << '\n';
+    std::cout << std::format("|{:->48}|", "") << '\n';
 
     for (int i = 0; i < products.size(); i++)
     {
@@ -666,13 +679,13 @@ float printCart(Cart cart)
         int quantity = products[i].quantity;
         float price = Database::GetInstance().getProductInfo(products[i].id).price;
 
-        std::cout << std::format("|{:<4}|{:<20}|{:<8}|${:>9.2f}|",products[i].id,productName,quantity,price * (float)quantity) << '\n';
-        std::cout << std::format("|{:->45}|", "") << '\n';
+        std::cout << std::format("|{:<4}|{:<20}|{:<8}|${:>12.2f}|",products[i].id,productName,quantity,price * (float)quantity) << '\n';
+        std::cout << std::format("|{:->48}|", "") << '\n';
         total += price * quantity;
     }
-    std::cout << std::format("|Tax: ${:>39.2f}|", total * 0.15f) << '\n';
-    std::cout << std::format("|Total: ${:>37.2f}|", total * 1.15) << '\n';
-    std::cout << std::format("|{:->45}|", "") << '\n';
+    std::cout << std::format("|Tax: ${:>42.2f}|", total * 0.15f) << '\n';
+    std::cout << std::format("|Total: ${:>40.2f}|", total * 1.15) << '\n';
+    std::cout << std::format("|{:->48}|", "") << '\n';
 
     return total;
 }
@@ -712,19 +725,26 @@ void handleProcessOrders()
 
 void handleGetClientPasswords()
 {
-    auto users = Database::GetInstance().getAllUsers();
+    
+    std::system("cls");
+    printClientPasswords();
+    
+    system("pause");
+}
 
+void printClientPasswords()
+{
+    auto users = Database::GetInstance().getAllUsers();
     std::cout << std::format("|{:->56}|", "") << '\n';
-    std::cout << std::format("|{:<40}|{:<15}|","email","password") << '\n';
+    std::cout << std::format("|{:<40}|{:<15}|", "email", "password") << '\n';
     std::cout << std::format("|{:->56}|", "") << '\n';
     for (int i = 0; i < users.size(); i++)
     {
         std::string email = users[i].email;
         std::string password = Crypto::decryptPassword(Database::GetInstance().getPassword(email));
-        std::cout << std::format("|{:<40}|{:<15}|",email,password) << '\n';
+        std::cout << std::format("|{:<40}|{:<15}|", email, password) << '\n';
         std::cout << std::format("|{:->56}|", "") << '\n';
     }
-    system("pause");
 }
 
 void handleChangeCustomerPassword()
@@ -733,25 +753,26 @@ void handleChangeCustomerPassword()
 
     do
     {
+        std::system("cls"); 
+        printClientPasswords();
         std::cout << "Enter Customer email: ";
         std::cin >> email;
 
         if (Database::GetInstance().accountExists(email))
         {
-            Logger::error("Email doesn't exist, enter email again");
             break;
         }
 
         if (!validateEmailAddress(email))
             Logger::error("Invalid Email, try again");
 
-
+        std::this_thread::sleep_for(2s);
     } while (true);
 
     std::cout << "Enter new Password: ";
     password = getPassword();
 
     Database::GetInstance().updateAccountPassword(email, password);
-    std::this_thread::sleep_for(1s);
+    std::this_thread::sleep_for(3s);
     
 }
